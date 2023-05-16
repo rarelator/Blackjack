@@ -8,6 +8,7 @@ var hidden;
 var deck;
 
 var canHit = true;
+var canStay = true;
 
 window.onload = function() {
     buildDeck();
@@ -69,6 +70,17 @@ function startGame() {
     document.getElementById("stay").addEventListener("click", stay);
 }
 
+function playAgain() {
+    if(!canHit) {
+        var playAgain = document.createElement("button");
+        playAgain.setAttribute("id", "playAgain")
+        playAgain.setAttribute("class", "btn");
+        playAgain.innerText = "Play Again?";
+        var body = document.getElementsByTagName("body")[0];
+        body.appendChild(playAgain);
+    }
+}
+
 function hit() {
     if(!canHit) {
         return;
@@ -83,11 +95,24 @@ function hit() {
 
     if(reduceAce(yourSum, yourAceCount) > 21) {
         canHit = false;
+        canStay = false;
+        document.getElementById("results").innerText = "You Lose!";
+        let audio = new Audio("losing.wav");
+        audio.play();
+        playAgain();
+        document.getElementById("playAgain").addEventListener("click", restart);
     }
 }
 
+function restart() {
+    window.location.reload();
+}
+
 function stay() {
-    dealerSum = reduceAce(dealerSum, dealerAceCount);
+    if(!canStay) {
+        return;
+    }
+
     yourSum = reduceAce(yourSum, yourAceCount);
 
     canHit = false;
@@ -100,30 +125,38 @@ function stay() {
         cardImg.src = "./cards/" + card + ".png";
         dealerSum += getValue(card);
         dealerAceCount += checkAce(card);
+        dealerSum = reduceAce(dealerSum, dealerAceCount);
         document.getElementById("dealer-cards").append(cardImg);
     }
 
+    let audio = ""
     let message = "";
-    if(yourSum > 21) {
-        message = "You Lose!";
-    }
-    else if(dealerSum > 21) {
+    if(dealerSum > 21) {
         message = "You win!";
+        audio = new Audio("win.wav");
     }
     // both you and the dealer <= 21
     else if(yourSum == dealerSum) {
         message = "Tie!";
+        audio = new Audio("tie.wav");
     }
     else if(yourSum > dealerSum) {
         message = "You win!";
+        audio = new Audio("win.wav");
     }
     else if(dealerSum > yourSum) {
         message = "You Lose!";
+        audio = new Audio("losing.wav");
     }
 
     document.getElementById("dealer-sum").innerText = dealerSum;
     document.getElementById("your-sum").innerText = yourSum;
     document.getElementById("results").innerText = message;
+    audio.play();
+
+    playAgain();
+    document.getElementById("playAgain").addEventListener("click", restart);
+    canStay = false;
 }
 
 function reduceAce(playerSum, playerAceCount) {
